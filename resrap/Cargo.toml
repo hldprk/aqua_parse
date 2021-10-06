@@ -2,6 +2,10 @@
 name = "resrap"
 version = "0.1.0"
 edition = "2018"
+description = "A parser library."
+license = "MIT"
+repository = "https://github.com/hldprk/resrap"
+documentation = "https://docs.rs/resrap"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

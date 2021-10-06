@@ -3,6 +3,10 @@ name = "resrap_proc_macro"
 version = "0.1.0"
 edition = "2018"
 keywords = ["parser", "macro", "derive"]
+description = "Macros for resrap."
+license = "MIT"
+repository = "https://github.com/hldprk/resrap"
+documentation = "https://docs.rs/resrap_proc_macro"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
