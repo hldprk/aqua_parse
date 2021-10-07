@@ -1,6 +1,6 @@
 [package]
 name = "resrap"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2018"
 description = "A parser library."
 license = "MIT"
@@ -10,6 +10,6 @@ documentation = "https://docs.rs/resrap"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-resrap_proc_macro = { path = "../resrap_proc_macro", version="0.1.0" }
+resrap_proc_macro = { path = "../resrap_proc_macro", version="0.2.0" }
 regex = "1.5.4"
 ansi_term = "0.12.1"
