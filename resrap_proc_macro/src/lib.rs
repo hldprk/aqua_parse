@@ -20,7 +20,8 @@ extern crate proc_macro;
 /// A `Parse` `struct` will parse each of its members in sequence, failing entirely if one can't be parsed.
 ///
 ///## `enum`
-/// A `Parse` `enum` will parse each of its variants in the defined order until one succeeds, which is then used as the result.
+/// A `Parse` `enum` will parse each of its variants in the defined order until one succeeds, 
+/// only failing if no variants succeed.
 ///
 ///## `#[padded]`
 /// 

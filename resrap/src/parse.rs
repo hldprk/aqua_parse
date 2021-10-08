@@ -1,6 +1,7 @@
 use std::borrow::Borrow;
 use std::borrow::BorrowMut;
 use std::fmt::Debug;
+use std::rc::Rc;
 
 use crate::*;
 
@@ -56,6 +57,26 @@ impl<P : Parse> Parse for Vec<P> {
 		if parsed.len() > 0 { Ok(parsed) } 
 		
 		else { Err(last_error.unwrap()) }
+
+	}
+
+}
+
+impl<P : Parse> Parse for Box<P> {
+
+	fn parse(position: &mut Position) -> Result<Self> {
+
+		Ok(Box::new(P::parse(position)?))
+
+	}
+
+}
+
+impl<P : Parse> Parse for Rc<P> {
+
+	fn parse(position: &mut Position) -> Result<Self> {
+
+		Ok(Rc::new(P::parse(position)?))
 
 	}
 

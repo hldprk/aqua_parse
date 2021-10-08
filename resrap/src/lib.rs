@@ -143,4 +143,16 @@ mod tests {
 
 	}
 
+	#[test]
+	fn owned_parses() -> Result<()> {
+
+		let ref mut position = Position::from("12");
+
+		Box::<One>::parse(position)?;
+		std::rc::Rc::<Two>::parse(position)?;
+
+		Ok(())
+
+	}
+
 }
