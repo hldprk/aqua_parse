@@ -1,18 +1,10 @@
+use std::ops::RangeBounds;
+
 use crate::*;
 
 /// When parsed, matches a `&'static str` passed generically to `Token`.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Token<const TOKEN: &'static str>;
-
-impl<const TOKEN: &'static str> std::fmt::Debug for Token<TOKEN> {
-
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-
-		write!(f, "Token<{:?}>", TOKEN)
-		
-	}
-
-}
 
 impl<const TOKEN: &'static str> std::fmt::Display for Token<TOKEN> {
 
@@ -29,10 +21,12 @@ impl<const TOKEN: &'static str> Parse for Token<TOKEN> {
 	fn parse(position: &mut Position) -> Result<Self>
 	where Self : Sized {
 
+		let start_position = position.clone();
+
 		let error = Error {
 
 			identifier: TOKEN.to_string(),
-			position: position.clone(),
+			position: start_position.clone(),
 			cause: None
 
 		};

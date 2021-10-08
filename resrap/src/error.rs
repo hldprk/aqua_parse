@@ -57,7 +57,7 @@ impl std::fmt::Display for Error {
 				
 				"    from '{}' at row {}, column {}", 
 				cloned_unwraped.identifier,
-				cloned_unwraped.position.row(),
+				cloned_unwraped.position.line(),
 				cloned_unwraped.position.column(),
 
 			);

@@ -20,11 +20,13 @@ mod error;
 mod padded;
 mod token;
 mod whitespace;
+mod spanned;
 
 pub use resrap_proc_macro::Parse;
 pub use resrap_proc_macro::*;
 
 pub use parse::*;
+pub use spanned::*;
 pub use position::*;
 pub use error::*;
 pub use padded::*;
@@ -62,11 +64,12 @@ mod tests {
 
 	#[test]
 	fn tuple_like_sequence() -> Result<()> {
-			
+
+		#[padded]
 		#[derive(Parse, Debug)]
 		pub struct TupleLikeSequence(One, Two, Three);
 
-		let ref mut position = Position::from("123");
+		let ref mut position = Position::from(" \t 123".to_string());
 
 		let _ = TupleLikeSequence::parse(position)?;
 

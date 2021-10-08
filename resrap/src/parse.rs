@@ -12,6 +12,7 @@ pub trait Parse : Debug + Sized {
 
 }
 
+
 impl<P : Parse> Parse for Option<P> {
 
 	fn parse(position: &mut Position) -> Result<Self> {

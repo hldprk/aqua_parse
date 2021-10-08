@@ -16,6 +16,7 @@ pub fn struct_helper(identifier: Ident, data_struct: DataStruct, is_padded: bool
 
 	let whitespace_parse = match is_padded {
 
+		// parses as many whitespace characters as possible, not failing if none are found  
 		true => quote!{ let _ = Option::<Vec::<Whitespace>>::parse(position); },
 		
 		false => quote!{}

@@ -16,7 +16,8 @@ pub fn derive_helper(input: proc_macro2::TokenStream) -> proc_macro2::TokenStrea
 		.find(|attribute|
 			attribute.path.is_ident("padded"))
 		.is_some();
-
+	
+	// delegates a helper function based on data type
 	match data {
 
 		Data::Struct(data_struct) => struct_helper(identifier, data_struct, is_padded),

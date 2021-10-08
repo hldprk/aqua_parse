@@ -1,21 +1,25 @@
 
+use std::ops::Index;
+use std::rc::Rc;
+use ansi_term::*;
+
 /// An `Iterator` over a string being parsed.
 ///
-/// Can be initialized by some `Display` type by `Position::from`.
-#[derive(Clone, Debug, PartialEq, Eq)]
+/// Can be converted from `T : Display`.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Position {
 
-	source: String,
+	source: Rc<String>,
 	index: usize,
 
 }
 
 impl<T : std::fmt::Display> From<T> for Position {
 
-	fn from(t : T) -> Self {
+	fn from(value : T) -> Self {
 		
 		let index = 0;
-		let source = t.to_string();
+		let source = Rc::from(value.to_string());
 
 		Position { source, index }
 
@@ -29,7 +33,7 @@ impl Iterator for Position {
 
 	fn next(&mut self) -> Option<Self::Item> {
 		
-		let character_maybe = self.source.clone().chars().nth(self.index);
+		let character_maybe = self.source.chars().nth(self.index);
 
 		if character_maybe.is_some() { self.index += 1; }
 
@@ -46,7 +50,7 @@ impl Position {
 
 		let mut column  = 1;
 
-		for (i, c) in self.source.clone().char_indices() {
+		for (i, c) in self.source.char_indices() {
 
 			if i >= self.index { break; }
 			else if c == '\n' { column = 1; }
@@ -65,7 +69,7 @@ impl Position {
 
 	}
 
-	/// Returns the input string this [Position] was initialized wit
+	/// Returns the input string this [Position] was initialized with.
 	pub fn source(&self) -> &str {
 
 		&self.source
@@ -79,19 +83,19 @@ impl Position {
 
 	}
 
-	/// 1-indexed, current column within the input string.
-	pub fn row(&self) -> usize {
+	/// 1-indexed, current line within the input string.
+	pub fn line(&self) -> usize {
 		
-		let mut row  = 1;
+		let mut line  = 1;
 
-		for (i, c) in self.source.clone().char_indices() {
+		for (i, c) in self.source.char_indices() {
 
 			if i >= self.index { break; }
-			else if c == '\n' { row += 1; }
+			else if c == '\n' { line += 1; }
 
 		}
 
-		row
+		line
 
 	}
 
