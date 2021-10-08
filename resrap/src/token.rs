@@ -2,11 +2,11 @@ use std::ops::RangeBounds;
 
 use crate::*;
 
-/// When parsed, matches a `&'static str` passed generically to `Token`.
+/// Parses a `&'static str` passed generically to `Token`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Token<const TOKEN: &'static str>;
 
-impl<const TOKEN: &'static str> std::fmt::Display for Token<TOKEN> {
+impl<const TOKEN: &'static str> Token<TOKEN> {
 
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 

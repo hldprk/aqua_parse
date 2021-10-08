@@ -21,10 +21,9 @@ mod padded;
 mod token;
 mod whitespace;
 mod spanned;
+mod pattern;
 
-pub use resrap_proc_macro::Parse;
 pub use resrap_proc_macro::*;
-
 pub use parse::*;
 pub use spanned::*;
 pub use position::*;
@@ -32,6 +31,7 @@ pub use error::*;
 pub use padded::*;
 pub use token::*;
 pub use whitespace::*;
+pub use pattern::*;
 
 #[cfg(test)]
 mod tests {
@@ -41,6 +41,7 @@ mod tests {
 	type One = Token<"1">;
 	type Two = Token<"2">;
 	type Three = Token<"3">;
+
 
 	#[test]
 	fn sequence() -> Result<()> {
@@ -154,5 +155,20 @@ mod tests {
 		Ok(())
 
 	}
+
+	#[test]
+	fn pattern() -> Result<()> {
+
+		let ref mut position = Position::from("1234asdf");
+
+		type Number = Pattern<"[0-9]+">;
+
+		let _ = Number::parse(position)?;
+
+		Ok(())
+
+	}
+
+	
 
 }
