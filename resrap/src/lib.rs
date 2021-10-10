@@ -169,6 +169,16 @@ mod tests {
 
 	}
 
-	
+	#[test]
+	fn boolean() -> Result<()> {
+
+		let ref mut position = Position::from("truefalse");
+
+	 	let _ =  bool::parse(position)?;
+		let _ =  bool::parse(position)?;
+
+		Ok(())
+
+	}
 
 }

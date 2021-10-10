@@ -81,3 +81,27 @@ impl<P : Parse> Parse for Rc<P> {
 	}
 
 }
+
+impl Parse for bool {
+
+	fn parse(position: &mut Position) -> Result<Self> {
+		
+		let result = Pattern::<"(true|false)">::parse(position);
+
+		match result {
+
+			Ok(pattern) => {
+
+				let boolean = pattern.matched_string().parse::<bool>().unwrap();
+
+				Ok(boolean)
+
+			},
+
+			Err(error) => Err(error)
+
+		}
+
+	}
+
+}
