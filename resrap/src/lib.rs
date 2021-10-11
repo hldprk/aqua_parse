@@ -181,4 +181,30 @@ mod tests {
 
 	}
 
+	#[test]
+	fn labeled_choice() -> Result<()> {
+
+		#[labeled]
+		#[padded]
+		#[derive(Parse, Debug)]
+		pub enum LabeledChoice {
+	
+			One(One),
+			Two(Two),
+			Three(Three),
+	
+		}
+
+		let ref mut position = Position::from(" 3 \t \n 1  2    ");
+
+		let labeled = LabeledChoice::parse(position)?;
+		LabeledChoice::parse(position)?;
+		LabeledChoice::parse(position)?;
+		
+		println!("{:?}", LabeledChoiceLabel::label(labeled));
+
+		Ok(())
+
+	}
+
 }

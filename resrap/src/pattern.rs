@@ -2,7 +2,7 @@ use crate::*;
 use regex::Regex;
 
 /// Similar to [Token], except this will parse a `Regex` pattern.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Pattern<const PATTERN: &'static str> {
 
 	matched_string: String

@@ -3,7 +3,7 @@ use std::ops::RangeBounds;
 use crate::*;
 
 /// Parses a `&'static str` passed generically to `Token`.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Token<const TOKEN: &'static str>;
 
 impl<const TOKEN: &'static str> Token<TOKEN> {
