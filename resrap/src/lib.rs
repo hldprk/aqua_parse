@@ -22,7 +22,9 @@ mod token;
 mod whitespace;
 mod spanned;
 mod pattern;
+mod list;
 
+pub use list::*;
 pub use resrap_proc_macro::*;
 pub use parse::*;
 pub use spanned::*;
@@ -176,6 +178,19 @@ mod tests {
 
 	 	let _ =  bool::parse(position)?;
 		let _ =  bool::parse(position)?;
+
+		Ok(())
+
+	}
+	
+	#[test]
+	fn list() -> Result<()> {
+
+		type OneList = List<One>;
+
+		let ref mut position = Position::from("1, 1, 1,1 ");
+
+		let _ = OneList::parse(position)?;
 
 		Ok(())
 

@@ -1,6 +1,6 @@
 use crate::*;
 
-/// Given `P : Parse`, attempts parsing whitespace before and after parsing `P`, then returning `P`.
+/// Given `P : Parse`, parses `Option<Vec<Whitespace>>` before and after parsing `P`, then returns `P`.
 #[derive(Debug)]
 pub struct Padded<P : Parse>(pub P);
 
@@ -16,46 +16,14 @@ impl<P : Parse> Parse for Padded<P> {
 
 	fn parse(position: &mut Position) -> Result<Self> {
 		
-		loop {
-
-			let cloned_next = position.clone().next();
-
-			if cloned_next.is_none() { break; }
-
-			let cloned_character = cloned_next.unwrap();
-
-			if cloned_character.is_whitespace() {
-
-				position.next();
-
-			} 
-			
-			else { break; }
-
-		}
-
+		let _ = Option::<Vec::<Whitespace>>::parse(position);
+		
 		let result = P::parse(position);
-
-		loop {
-
-			let cloned_next = position.clone().next();
-
-			if cloned_next.is_none() { break; }
-
-			let cloned_character = cloned_next.unwrap();
-
-			if cloned_character.is_whitespace() {
-
-				position.next();
-
-			} 
-			
-			else { break; }
-
-		}
+		
+		let _ = Option::<Vec::<Whitespace>>::parse(position);
 
 		match result {
-
+			
 			Ok(ok) => Ok(Padded(ok)),
 			Err(error) => Err(error)
   
