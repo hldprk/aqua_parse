@@ -1,19 +1,35 @@
+use std::any::Any;
 use std::borrow::Borrow;
 use std::borrow::BorrowMut;
+use std::collections::HashSet;
+use std::convert::TryInto;
 use std::fmt::Debug;
 use std::rc::Rc;
+use std::convert::TryFrom;
 
 use crate::*;
 
-/// Constructs the implementing type by fully or partially consuming a [Position].
+/// Constructs the implementing type by fully or partially consuming a [`Position`].
+///## Example
+/// ```
+/// use resrap::*;
+///
+/// type A = Literal::<"a">;
+/// 
+/// let ref mut position = Position::from("a");
+/// 
+/// assert_eq!(Ok(A::default()), A::parse(position))
+/// 
+/// ``` 
 pub trait Parse : Debug + Sized {
 
-	/// Advances [Position], returning `Self` or [Error].
+	/// Advances [`Position`], returning `Self` or [`Error`].
 	fn parse(position: &mut Position) -> Result<Self>;
 
 }
 
-
+/// Tries parsing `P : Parse`, returning `Ok(Self)`, 
+/// otherwise returning `None` and leaving [`Position`] alone.
 impl<P : Parse> Parse for Option<P> {
 
 	fn parse(position: &mut Position) -> Result<Self> {
@@ -61,6 +77,44 @@ impl<P : Parse> Parse for Vec<P> {
 	}
 
 }
+
+/// Parses `P : Parse` exactly `N` times, otherwise returns `Err(error)`.
+impl<const N : usize, P : Parse + Default> Parse for [P; N] {
+
+	fn parse(position: &mut Position) -> Result<Self> {
+		
+		let mut parsed = Vec::default();
+		let last_error;
+
+		loop {
+
+			let result = P::parse(position);
+
+			if result.is_ok() { parsed.push(result.unwrap()); } 
+			
+			else { 
+			
+				last_error = Some(result.unwrap_err());
+				
+				break;
+			
+			}
+
+		}
+
+		let result = <[P;N]>::try_from(parsed);
+
+		match result {
+
+			Ok(array) => Ok(array),
+			Err(_) => Err(last_error.unwrap())
+
+		}
+		
+	}
+
+}
+
 
 impl<P : Parse> Parse for Box<P> {
 

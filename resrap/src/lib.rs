@@ -15,23 +15,23 @@
 //! automatically implements [Parse] for a `struct` or `enum`, given each of its members or variants also implement it.
 
 mod parse;
+mod parse_value;
 mod position;
 mod error;
 mod padded;
-mod token;
+mod literal;
 mod whitespace;
 mod spanned;
 mod pattern;
-mod list;
 
-pub use list::*;
+pub use parse_value::*;
 pub use resrap_proc_macro::*;
 pub use parse::*;
 pub use spanned::*;
 pub use position::*;
 pub use error::*;
 pub use padded::*;
-pub use token::*;
+pub use literal::*;
 pub use whitespace::*;
 pub use pattern::*;
 
@@ -40,10 +40,9 @@ mod tests {
 
 	use crate::*;
 
-	type One = Token<"1">;
-	type Two = Token<"2">;
-	type Three = Token<"3">;
-
+	type One = Literal<"1">;
+	type Two = Literal<"2">;
+	type Three = Literal<"3">;
 
 	#[test]
 	fn sequence() -> Result<()> {
@@ -60,6 +59,8 @@ mod tests {
 		let ref mut position = Position::from("123");
 
 		let _ = Sequence::parse(position)?;
+
+		println!("{:?}", position);
 
 		Ok(())
 
@@ -183,17 +184,5 @@ mod tests {
 
 	}
 	
-	#[test]
-	fn list() -> Result<()> {
-
-		type OneList = List<One>;
-
-		let ref mut position = Position::from("1, 1, 1,1 ");
-
-		let _ = OneList::parse(position)?;
-
-		Ok(())
-
-	}
 
 }

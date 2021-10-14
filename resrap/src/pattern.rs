@@ -1,7 +1,7 @@
 use crate::*;
 use regex::Regex;
 
-/// Similar to [Token], except this will parse a `Regex` pattern.
+/// Similar to [`Literal`], except this will parse a `Regex` pattern.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Pattern<const PATTERN: &'static str> {
 
