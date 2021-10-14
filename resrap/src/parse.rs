@@ -22,7 +22,7 @@ impl<P : Parse> Parse for Option<P> {
 
 		match result_maybe {
 
-			Ok(result) => P::parse(position),
+			Ok(_) => Ok(Some(P::parse(position)?)),
 			Err(..) => Ok(None)
 
 		}
