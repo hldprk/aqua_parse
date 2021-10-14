@@ -18,11 +18,11 @@ impl<P : Parse> Parse for Option<P> {
 
 	fn parse(position: &mut Position) -> Result<Self> {
 		
-		let result_maybe = P::parse(position);
+		let result_maybe = P::parse(position.clone().borrow_mut());
 
 		match result_maybe {
 
-			Ok(result) => Ok(Some(result)),
+			Ok(result) => P::parse(position),
 			Err(..) => Ok(None)
 
 		}
