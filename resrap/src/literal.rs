@@ -32,15 +32,7 @@ impl<const LITERAL: &'static str> Parse for Literal<LITERAL> {
 	fn parse(position: &mut Position) -> Result<Self>
 	where Self : Sized {
 
-		let start_position = position.clone();
-
-		let error = Error {
-
-			identifier: LITERAL.to_string(),
-			position: start_position.clone(),
-			cause: None
-
-		};
+		let error = Error::unexpected::<Self>(position.clone());
 		
 		let expected_range = position.index() .. position.index() + LITERAL.len() - 1;
 

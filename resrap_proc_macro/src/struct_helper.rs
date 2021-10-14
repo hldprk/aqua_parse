@@ -3,7 +3,7 @@ use syn::*;
 use quote::*;
 use syn::spanned::Spanned;
 
-pub fn struct_helper(identifier: Ident, data_struct: DataStruct, is_padded: bool) -> proc_macro2::TokenStream {
+pub fn struct_helper(identifier: Ident, data_struct: DataStruct, is_strict: bool) -> proc_macro2::TokenStream {
 
 	// `TokenStream` containing each fields parses
 	let mut field_parses = TokenStream::default();
@@ -14,12 +14,12 @@ pub fn struct_helper(identifier: Ident, data_struct: DataStruct, is_padded: bool
 	// for naming tuple fields
 	let mut n = 0;
 
-	let whitespace_parse = match is_padded {
+	let whitespace_parse = match is_strict {
 
 		// parses as many whitespace characters as possible, not failing if none are found  
-		true => quote!{ let _ = Option::<Vec::<Whitespace>>::parse(position); },
+		false => quote!{ let _ = Option::<Vec::<Whitespace>>::parse(position); },
 		
-		false => quote!{}
+		true => quote!{}
 
 	};
 
@@ -54,19 +54,19 @@ pub fn struct_helper(identifier: Ident, data_struct: DataStruct, is_padded: bool
 
 		field_parses.extend(quote_spanned!{field.span()=>
 
+			if position.clone().next().is_none() {
+
+				return Err(Error::unexpected_end::<#identifier>(start_position));
+
+			}
+
 			let #field_maybe = #field_type::parse(position);
 
 			if #field_maybe.is_err() {
 
-				let cause = Some(Box::new(#field_maybe.unwrap_err()));
+				let cause = Box::new(#field_maybe.unwrap_err());
 
-				let error = Error {
-					
-					identifier: stringify!(#identifier).to_string(),
-					position: start_position,
-					cause
-				
-				};
+				let error = Error::branch::<#identifier>(start_position, cause);
 
 				return Err(error);
 

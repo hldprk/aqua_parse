@@ -11,17 +11,17 @@ pub fn derive_helper(input: proc_macro2::TokenStream) -> proc_macro2::TokenStrea
 	let data = derive_input.data.clone();
 
 	// checks for an outer attribute named "padded"
-	let is_padded = 
+	let is_strict = 
 		derive_input.attrs.iter()
 		.find(|attribute|
-			attribute.path.is_ident("padded"))
+			attribute.path.is_ident("strict"))
 		.is_some();
 	
 	// delegates a helper function based on data type
 	match data {
 
-		Data::Struct(data_struct) => struct_helper(identifier, data_struct, is_padded),
-		Data::Enum(data_enum) => enum_helper(identifier, data_enum, is_padded),
+		Data::Struct(data_struct) => struct_helper(identifier, data_struct, is_strict),
+		Data::Enum(data_enum) => enum_helper(identifier, data_enum, is_strict),
 		Data::Union(_) => quote_spanned! {derive_input.span()=> 
 		
 			compile_error!("unions can't be 'Parse'") 

@@ -23,15 +23,7 @@ impl<const PATTERN: &'static str> Parse for Pattern<PATTERN> {
 
 	fn parse(position: &mut Position) -> Result<Self> {
 		
-		let start_position = position.clone();
-
-		let error = Error {
-
-			identifier: PATTERN.to_string(),
-			position: start_position.clone(),
-			cause: None
-
-		};
+		let error = Error::unexpected::<Self>(position.clone());
 
 		let regex_maybe = Regex::new(PATTERN);
 

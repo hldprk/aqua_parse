@@ -3,7 +3,7 @@ use syn::*;
 use quote::*;
 use syn::spanned::Spanned;
 
-pub fn enum_helper(identifier: Ident, data_enum: DataEnum, is_padded: bool) -> proc_macro2::TokenStream {
+pub fn enum_helper(identifier: Ident, data_enum: DataEnum, is_strict: bool) -> proc_macro2::TokenStream {
 	
 	// assignment statements for variables 
 	// holding `Result` from each variant's parse
@@ -16,11 +16,11 @@ pub fn enum_helper(identifier: Ident, data_enum: DataEnum, is_padded: bool) -> p
 
 	let mut all_variant_maybe_identifiers = Vec::default();
 
-	let whitespace_parse = match is_padded {
+	let whitespace_parse = match is_strict {
 
-		true => quote!{ let _ = Option::<Vec::<Whitespace>>::parse(position); },
+		false => quote!{ let _ = Option::<Vec::<Whitespace>>::parse(position); },
 		
-		false => quote!{}
+		true => quote!{}
 
 	};
 
@@ -99,7 +99,13 @@ pub fn enum_helper(identifier: Ident, data_enum: DataEnum, is_padded: bool) -> p
 		
 	}
 	
-	let mut impl_body = quote!(use std::borrow::BorrowMut;);
+	let mut impl_body = quote!{ 
+		
+		use std::borrow::BorrowMut;
+	
+		let start_position = position.clone();
+
+	};
 	
 	impl_body.extend(whitespace_parse);
 	impl_body.extend(maybies);
@@ -116,17 +122,11 @@ pub fn enum_helper(identifier: Ident, data_enum: DataEnum, is_padded: bool) -> p
 			
 			#error_unwraps
 
-			let error = errors.into_iter().max().unwrap();
+			let cause = Box::from(errors.into_iter().max().unwrap());
 
-			let choice_error = Error {
+			let error = Error::branch::<#identifier>(start_position, cause);
 
-				identifier: stringify!(#identifier).to_string(),
-				position: error.position.clone(),
-				cause: Some(Box::new(error.clone()))
-
-			};
-
-			Err(choice_error)
+			Err(error)
 
 		}
 

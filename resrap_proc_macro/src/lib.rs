@@ -23,11 +23,12 @@ extern crate proc_macro;
 /// A `Parse` `enum` will parse each of its variants in the defined order until one succeeds, 
 /// only failing if no variants succeed.
 ///
-///## `#[padded]`
+///## `#[strict]`
 /// 
-/// When this attribute is used, `Option<Vec<Whitespace>>` is parsed before
-/// and after parsing each child of this `struct` or `enum`.
-#[proc_macro_derive(Parse, attributes(padded))]
+/// By default, whitespace is parsed before and after every member or variant, 
+/// this attribute disables this behavior.
+/// 
+#[proc_macro_derive(Parse, attributes(strict))]
 pub fn parse_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	
 	crate::derive_helper(input.into()).into()

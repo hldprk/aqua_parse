@@ -1,7 +1,6 @@
 
 use std::ops::Index;
 use std::rc::Rc;
-use ansi_term::*;
 
 /// An `Iterator` over a string being parsed.
 ///

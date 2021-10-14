@@ -16,13 +16,7 @@ impl Parse for Whitespace {
 
 	fn parse(position: &mut Position) -> Result<Self> {
 		
-		let error = Error {
-
-			identifier: "Whitespace".to_string(),
-			position: position.clone(),
-			cause: None
-
-		};
+		let error = Error::unexpected::<Self>(position.clone());
 
 		let cloned_next = position.clone().next();
 

@@ -21,7 +21,7 @@ use crate::*;
 /// assert_eq!(Ok(A::default()), A::parse(position))
 /// 
 /// ``` 
-pub trait Parse : Debug + Sized {
+pub trait Parse : Debug + Sized + 'static {
 
 	/// Advances [`Position`], returning `Self` or [`Error`].
 	fn parse(position: &mut Position) -> Result<Self>;
@@ -56,6 +56,12 @@ impl<P : Parse> Parse for Vec<P> {
 
 		loop {
 
+			if position.clone().next().is_none() {
+
+				return Err(Error::unexpected_end::<Self>(position.clone()))
+
+			}
+
 			let result = P::parse(position);
 
 			if result.is_ok() { parsed.push(result.unwrap()); } 
@@ -79,7 +85,7 @@ impl<P : Parse> Parse for Vec<P> {
 }
 
 /// Parses `P : Parse` exactly `N` times, otherwise returns `Err(error)`.
-impl<const N : usize, P : Parse + Default> Parse for [P; N] {
+impl<const N : usize, P : Parse> Parse for [P; N] {
 
 	fn parse(position: &mut Position) -> Result<Self> {
 		
@@ -87,6 +93,12 @@ impl<const N : usize, P : Parse + Default> Parse for [P; N] {
 		let last_error;
 
 		loop {
+
+			if position.clone().next().is_none() {
+
+				return Err(Error::unexpected_end::<Self>(position.clone()))
+
+			}
 
 			let result = P::parse(position);
 

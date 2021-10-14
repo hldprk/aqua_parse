@@ -46,7 +46,8 @@ mod tests {
 
 	#[test]
 	fn sequence() -> Result<()> {
-			
+		
+		#[strict]
 		#[derive(Parse, Debug)]
 		pub struct Sequence {
 			
@@ -69,7 +70,6 @@ mod tests {
 	#[test]
 	fn tuple_like_sequence() -> Result<()> {
 
-		#[padded]
 		#[derive(Parse, Debug)]
 		pub struct TupleLikeSequence(One, Two, Three);
 
@@ -84,7 +84,6 @@ mod tests {
 	#[test]
 	fn padded_sequence() -> Result<()> {
 		
-		#[padded]
 		#[derive(Parse, Debug)]
 		pub struct PaddedSequence { 
 			
@@ -127,7 +126,6 @@ mod tests {
 	#[test]
 	fn padded_choice() -> Result<()> {
 
-		#[padded]
 		#[derive(Parse, Debug)]
 		pub enum PaddedChoice {
 	
@@ -154,6 +152,17 @@ mod tests {
 
 		Box::<One>::parse(position)?;
 		std::rc::Rc::<Two>::parse(position)?;
+
+		Ok(())
+
+	}
+
+	#[test]
+	fn end() -> Result<()> {
+
+		let ref mut position = Position::from("asdf");
+
+		let _ = Pattern::<"^asdf$">::parse(position)?;
 
 		Ok(())
 
