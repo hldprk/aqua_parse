@@ -30,9 +30,16 @@ impl<const TOKEN: &'static str> Parse for Token<TOKEN> {
 			cause: None
 
 		};
+		
+		let expected_range = position.index() .. position.index() + TOKEN.len();
 
-		if position.index() >= position.source().len() { Err(error) }
+		let token_too_long = position.source()
+			.char_indices()
+			.find(|(i, _)| !(expected_range.contains(i)))
+			.is_none();
 
+		if token_too_long { Err(error) }
+		
 		else if position.source()[position.index() .. position.index() + TOKEN.len()] == *TOKEN{
 
 			let length = TOKEN.len();

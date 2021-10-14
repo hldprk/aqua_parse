@@ -17,6 +17,16 @@ pub struct Span {
 
 impl Span {
 
+	pub fn new(position: Position, length: usize) -> Span {
+
+		Self { position, length }
+
+	}
+
+}
+
+impl Span {
+
 	pub fn position(&self) -> Position { self.position.clone() }
 	
 	pub fn length(&self) -> usize { self.length }
@@ -25,7 +35,13 @@ impl Span {
 
 		&self.position.source()[self.position.index() .. self.position.index() + self.length]
 
-	} 
+	}
+
+	pub fn lines(&self) -> std::str::Lines<'_> {
+
+		self.slice().lines()
+
+	}
 
 }
 
