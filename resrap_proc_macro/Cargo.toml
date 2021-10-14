@@ -1,6 +1,6 @@
 [package]
 name = "resrap_proc_macro"
-version = "0.7.0"
+version = "0.8.0"
 edition = "2018"
 keywords = ["parser", "macro", "derive"]
 description = "Macros for resrap."

@@ -138,6 +138,12 @@ pub fn enum_helper(identifier: Ident, data_enum: DataEnum, is_strict: bool) -> p
 
 			fn parse(position: &mut Position) -> Result<Self> {
 
+				if position.clone().next().is_none() {
+
+					return Err(Error::unexpected_end::<#identifier>(position.clone()))
+
+				}
+
 				#impl_body
 
 			}
