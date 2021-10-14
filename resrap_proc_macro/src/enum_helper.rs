@@ -120,7 +120,7 @@ pub fn enum_helper(identifier: Ident, data_enum: DataEnum, is_padded: bool) -> p
 
 			let choice_error = Error {
 
-				identifier: String::from("Choice"),
+				identifier: stringify!(#identifier).to_string(),
 				position: error.position.clone(),
 				cause: Some(Box::new(error.clone()))
 

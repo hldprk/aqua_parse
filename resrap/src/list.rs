@@ -41,7 +41,7 @@ impl<P : Parse> Parse for List<P> {
 			
 			let _ = Option::<Vec::<Whitespace>>::parse(position)?;
 			
-			let _ = Token::<",">::parse(position);
+			let _ = Token::<",">::parse(position)?;
 
 			let _ = Option::<Vec::<Whitespace>>::parse(position)?;
 			
