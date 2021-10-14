@@ -34,16 +34,13 @@ impl<const LITERAL: &'static str> Parse for Literal<LITERAL> {
 
 		let error = Error::unexpected::<Self>(position.clone());
 		
-		let expected_range = position.index() .. position.index() + LITERAL.len() - 1;
+		if position.clone().next().is_none() {
+	
+			return Err(Error::unexpected_end::<Self>(position.clone()))
 
-		let literal_too_long = position.source()
-			.char_indices()
-			.find(|(i, _)| !(expected_range.contains(i)))
-			.is_none();
+		}
 
-		if literal_too_long { Err(error) }
-		
-		else if position.source()[position.index() .. position.index() + LITERAL.len()] == *LITERAL{
+		else if position.remainder().starts_with(LITERAL) {
 
 			let length = LITERAL.len();
 
