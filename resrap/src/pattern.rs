@@ -43,7 +43,17 @@ impl<const PATTERN: &'static str> Parse for Pattern<PATTERN> {
 
 		let matched_string = regex_match.as_str().to_string();
 
-		for _ in 0..matched_string.len() { position.next(); }
+		for _ in 0..matched_string.len() {
+
+			if position.clone().next().is_none() {
+
+				return Err(Error::unexpected_end::<Self>(position.clone()))
+
+			}
+
+			else { let _ = position.next(); }
+
+		}
 
 		Ok(Self { matched_string })
 

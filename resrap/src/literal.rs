@@ -49,8 +49,14 @@ impl<const LITERAL: &'static str> Parse for Literal<LITERAL> {
 
 			for _ in 0..length {
 
-				let _ = position.next();
-
+				if position.clone().next().is_none() {
+	
+					return Err(Error::unexpected_end::<Self>(position.clone()))
+	
+				}
+	
+				else { let _ = position.next(); }
+	
 			}
 
 			return Ok(Self);
