@@ -1,0 +1,17 @@
+[package]
+name = "aqua_parse"
+version = "0.20.0"
+edition = "2021"
+description = "A parser library."
+license = "MIT"
+repository = "https://github.com/hldprk/aqua_parse"
+documentation = "https://docs.rs/aqua_parse"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+pattern = []
+
+[dependencies]
+aqua_parse_macro = { path = "../aqua_parse_macro" }
+aqua_error = { path = "../../aqua_error", version="0.1.0" }
+regex = "1.5.4"
