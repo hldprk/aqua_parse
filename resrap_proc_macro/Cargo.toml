@@ -1,7 +1,7 @@
 [package]
 name = "resrap_proc_macro"
-version = "0.8.0"
-edition = "2018"
+version = "0.10.0"
+edition = "2021"
 keywords = ["parser", "macro", "derive"]
 description = "Macros for resrap."
 license = "MIT"
@@ -16,4 +16,4 @@ proc_macro=true
 [dependencies]
 proc-macro2 = "1.0.29"
 quote = "1.0.9"
-syn = { version = "1.0.77", features = ["full"] }
+syn = { version = "1.0.77", features = ["full", "extra-traits"] }
