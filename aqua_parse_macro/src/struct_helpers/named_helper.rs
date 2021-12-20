@@ -87,7 +87,7 @@ pub fn named_helper(identifier: Ident, fields: Fields, options: Options) -> Toke
 
 			fn parse<'string>(string: &'string str, index: &mut usize) -> Result<'string, Self> {
 
-				use std::collections::HashMap;
+				use std::collections::BTreeMap;
 				use std::ops::Range;
 
 				#[allow(unused_assignments)]
@@ -97,7 +97,7 @@ pub fn named_helper(identifier: Ident, fields: Fields, options: Options) -> Toke
 				let mut end_index = 0;
 				
 				#[allow(unused_assignments)]
-				let mut peek = HashMap::<&'static str, Range<usize>>::default();
+				let mut peek = BTreeMap::<&'static str, Range<usize>>::default();
 
 				#field_parses
 

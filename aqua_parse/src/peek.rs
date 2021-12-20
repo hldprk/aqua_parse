@@ -1,10 +1,10 @@
 use super::*;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::ops::Range;
 
 /// A map from a `struct` field's name (`&'static str`) to a location (`Range<usize>`) in a `&str`.
-pub type Peek = HashMap<&'static str, Range<usize>>;
+pub type Peek = BTreeMap<&'static str, Range<usize>>;
 
 /// This is only implemented for `Peek` to get around the rules for derive-macros.
 impl Parse for Peek {
