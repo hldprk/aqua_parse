@@ -2,7 +2,7 @@ use super::*;
 use std::hash::*;
 
 /// Comma-separated list, where trailing comma is optional.
-#[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Default, Eq)]
 pub struct List<P : Parse>(Vec<P>);
 
 impl<P : Parse> Deref for List<P> {
