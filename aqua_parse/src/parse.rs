@@ -12,7 +12,7 @@ use crate::*;
 /// Constructs the implementing type by fully or partially consuming a [`Position`].
 ///## Example
 /// ```
-/// use resrap::*;
+/// use aqua_parse::*;
 ///
 /// type A = Literal::<"a">;
 /// 

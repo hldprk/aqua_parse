@@ -1,4 +1,4 @@
 
 
 [workspace]
-members = ["resrap", "resrap_proc_macro"]
+members = ["aqua_parse", "aqua_parse_macro"]

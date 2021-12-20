@@ -7,9 +7,9 @@
 
 //! A parsing library heavily leveraged by `proc_macro`.
 //!
-//! In `resrap`, syntax trees are defined by the structure of data types implmenting [Parse]. 
+//! In `aqua_parse`, syntax trees are defined by the structure of data types implmenting [Parse]. 
 //!
-//! Given `T : Parse`, a `resrap::Result<T>` is returned by passing a [Position] to `T::parse`.
+//! Given `T : Parse`, a `aqua_parse::Result<T>` is returned by passing a [Position] to `T::parse`.
 //!
 //! Along with the [Parse] trait, there's also a `derive` macro of the same name which 
 //! automatically implements [Parse] for a `struct` or `enum`, given each of its members or variants also implement it.
@@ -25,7 +25,7 @@ mod spanned;
 mod pattern;
 
 pub use parse_value::*;
-pub use resrap_proc_macro::*;
+pub use aqua_parse_macro::*;
 pub use parse::*;
 pub use spanned::*;
 pub use position::*;

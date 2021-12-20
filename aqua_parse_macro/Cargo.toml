@@ -1,12 +1,12 @@
 [package]
-name = "resrap_proc_macro"
+name = "aqua_parse_macro"
 version = "0.10.0"
 edition = "2021"
-keywords = ["parser", "macro", "derive"]
-description = "Macros for resrap."
+keywords = ["parser", "macro", "derive", "aqua"]
+description = "The macro used in 'aqua_parse'."
 license = "MIT"
-repository = "https://github.com/hldprk/resrap"
-documentation = "https://docs.rs/resrap_proc_macro"
+repository = "https://github.com/hldprk/aqua_parse"
+documentation = "https://docs.rs/aqua_parse_macro"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
