@@ -1,150 +1,117 @@
-use proc_macro2::*;
-use syn::*;
-use quote::*;
-use syn::spanned::Spanned;
+use std::ops::BitAnd;
+use std::ops::BitOr;
 
-pub fn enum_helper(identifier: Ident, data_enum: DataEnum, is_strict: bool) -> proc_macro2::TokenStream {
+use super::*;
+
+/// A helper that implements `Parse` for an `enum`.
+pub fn enum_helper(identifier: Ident, variants: Vec<Variant>, options: Options) -> TokenStream {
 	
-	// assignment statements for variables 
-	// holding `Result` from each variant's parse
-	let mut maybies = proc_macro2::TokenStream::default();
-	
-	// 'else if' statements that decide which variant wins
-	let mut else_ifs = proc_macro2::TokenStream::default();
+	let mut implementation_body = TokenStream::default();
 
-	let mut error_unwraps = proc_macro2::TokenStream::default();
-
-	let mut all_variant_maybe_identifiers = Vec::default();
-
-	let whitespace_parse = match is_strict {
-
-		false => quote!{ let _ = Option::<Vec::<Whitespace>>::parse(position); },
-		
-		true => quote!{}
-
-	};
-
-	for (i, variant) in data_enum.variants.iter().enumerate() {
+	for (variant_number, variant) in variants.iter().enumerate() {
 		
 		let variant_identifier = variant.ident.clone();
+
+		let other_identifier = Ident::new(&format!("Other{variant_identifier}"), Span::call_site());
 		
 		let variant_maybe_identifier = 
-			Ident::new( &format!("{}_maybe", variant_identifier),proc_macro2::Span::call_site());
-		
-		let variant_error_identifier = 
-			Ident::new( &format!("{}_error", variant_identifier),proc_macro2::Span::call_site());
+			Ident::new( &format!("variant_{variant_number}_maybe"),Span::call_site());
+	
+		let variant_index_identifier = 
+			Ident::new( &format!("variant_{variant_number}_index"),Span::call_site());
 
-		all_variant_maybe_identifiers.push(variant_maybe_identifier.clone());
+		let variant_fields = variant.fields.clone();
 
-		if let Fields::Unnamed(fields) = variant.fields.clone() {
-									
-			let fields = fields.unnamed;
+		let mut return_variables = TokenStream::default();
 
-			if fields.len() != 1 {
-
-				return quote_spanned! {variant.span()=>
+		for (field_number, field) in variant_fields.clone().iter().enumerate() {
 			
-					compile_error!("currently only single-field, tuple variants are allowed for 'Parse' enums") 
+			let return_variable: TokenStream = match variant_fields {
 				
-				};
+				Fields::Named(..) => {
+					
+					let field_identifier = field.ident.clone().unwrap();
+					quote!{ #field_identifier : other_result.#field_identifier, }
+
+				},
+				Fields::Unnamed(..) => {
+
+					let result_field_identifier = Index::from(field_number);
+
+					quote!{ other_result.#result_field_identifier, } 
+				
+				}
+
+				Fields::Unit => quote!{ #identifier }
+
+			};
+
+			return_variables.extend(return_variable);
+
+		}
+
+		// an `Options` is created from the variant's attributes
+		let variant_attributes = variant.attrs.clone();
+		let mut variant_options = Options::from(variant_attributes);
+		variant_options.is_strict = variant_options.is_strict || options.is_strict;
+		
+		let return_value = match variant_fields {
+
+			Fields::Named(..) => quote!{ #identifier::#variant_identifier { #return_variables } },
+			Fields::Unnamed(..) => quote!{ #identifier::#variant_identifier ( #return_variables) },
+			Fields::Unit => quote! { #identifier::#variant_identifier } 
+			
+		};
+
+		let variant_implementation = struct_helper(other_identifier.clone(), variant_fields.clone(), variant_options);
+
+		implementation_body.extend(quote!{
+
+			#[derive(Debug)]
+			struct #other_identifier #variant_fields;
+			#variant_implementation
+
+			let ref mut #variant_index_identifier = index.clone();
+			
+			let #variant_maybe_identifier = #other_identifier::parse(string, #variant_index_identifier); 
+
+			if #variant_maybe_identifier.is_ok() {
+
+				let other_result = #variant_maybe_identifier.unwrap();
+
+				#[allow(unused_mut)]
+				let mut result = Ok(#return_value); 
+
+
+				index.clone_from(#variant_index_identifier);
+
+				return result;
+
+			} else {
+
+				let mut error = #variant_maybe_identifier.unwrap_err();
+				
+				errors.push(error);
 
 			}
 
-			let field = fields.first().unwrap().clone();
+		});
 
-			let field_type =  field.ty;
-	
-			maybies.extend(quote!{
-				
-				let #variant_maybe_identifier = #field_type::parse(position.clone().borrow_mut());
-			
-			});
-
-			let if_or_else_if = 
-				if i == 0 { quote!(if) } 
-				else { quote!(else if) };
-
-			else_ifs.extend(quote_spanned!{variant.span()=>
-
-				#if_or_else_if #variant_maybe_identifier.is_ok() {
-
-					let parsed = #field_type::parse(position).unwrap();
-
-					#whitespace_parse
-
-					Ok(Self::#variant_identifier(parsed))
-
-				}
-
-			});
-
-			error_unwraps.extend(quote_spanned!{variant.span()=>
-
-				let #variant_error_identifier = #variant_maybe_identifier.unwrap_err();
-				
-				errors.push(#variant_error_identifier);
-
-			});
-		}
-
-		else { 
-			
-			return quote_spanned! {variant.fields.span()=>
-			
-				compile_error!("only tuple-like variants with one field are allowed for 'Parse' enums") 
-			
-			};
-			
-		}
-		
 	}
-	
-	let mut impl_body = quote!{ 
-		
-		use std::borrow::BorrowMut;
-	
-		let start_position = position.clone();
 
-	};
-	
-	impl_body.extend(whitespace_parse);
-	impl_body.extend(maybies);
-	
-	impl_body.extend(else_ifs);
+	quote!{
 
-	// deciding which variant's error is chosen when none are `Ok` 
-	// depends on which error's `Position` made the most progress after parsing  
-	impl_body.extend(quote!{
+		impl Parse for #identifier {
 
-		else {
+			fn parse<'string>(string: &'string str, index: &mut usize) -> Result<'string, Self> {
 
-			let mut errors = Vec::<Error>::default();
-			
-			#error_unwraps
+				let mut errors = Vec::default();
 
-			let cause = Box::from(errors.into_iter().max().unwrap());
+				#implementation_body
 
-			let error = Error::branch::<#identifier>(start_position, cause);
+				let error = errors.iter().min().unwrap().clone();
 
-			Err(error)
-
-		}
-
-	});
-
-	quote! {
-
-		impl Parse for #identifier{
-
-			fn parse(position: &mut Position) -> Result<Self> {
-
-				if position.clone().next().is_none() {
-
-					return Err(Error::unexpected_end::<#identifier>(position.clone()))
-
-				}
-
-				#impl_body
+				Err(error)
 
 			}
 

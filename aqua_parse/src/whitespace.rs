@@ -1,41 +1,30 @@
-use crate::*;
+use super::*;
 
-/// Container for a whitespace `char`.
-#[derive(Copy, Debug, Clone, PartialEq, Eq)]
-pub struct Whitespace(pub char);
+/// Parses a tab (`\t`) character.
+#[strict]
+#[literal("\t")]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Parse, Hash)]
+pub struct Tab;
 
-impl std::ops::Deref for Whitespace {
-    
-	type Target = char;
+#[strict]
+#[literal(" ")]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Parse, Hash)]
+pub struct Space;
 
-    fn deref(&self) -> &Self::Target { &self.0 }
+/// Parses a whitespace character.
+#[strict]
+#[pattern(r"\s")]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Parse, Hash)]
+pub struct Whitespace(pub String);
 
-}
+/// Parses a newline(\n or \r\n).
+#[strict]
+#[pattern(r"(\r\n)|(\n)")]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Parse, Hash)]
+pub struct Newline(pub String);
 
-impl Parse for Whitespace {
-
-	fn parse(position: &mut Position) -> Result<Self> {
-		
-		let error = Error::unexpected::<Self>(position.clone());
-
-		let cloned_next = position.clone().next();
-
-		if cloned_next.is_none() { return Err(error); }
-
-		let cloned_character = cloned_next.unwrap();
-
-		if cloned_character.is_whitespace() {
-
-			position.next();
-
-			Ok(Self(cloned_character))
-		
-		} else {
-
-			Err(error)
-
-		} 
-
-	}
-
-}
+/// Parses a non-whitespace character.
+#[strict]
+#[pattern(r"\S")]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Parse, Hash)]
+pub struct Nonwhitespace(pub String);

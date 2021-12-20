@@ -1,197 +1,185 @@
-#![allow(unused_imports)]
-#![allow(incomplete_features)]
 #![allow(dead_code)]
 #![allow(legacy_derive_helpers)]
-#![feature(iter_advance_by)]
+#![allow(const_evaluatable_unchecked)]
+#![allow(incomplete_features)]
 #![feature(adt_const_params)]
+#![feature(generic_const_exprs)]
 
-//! A parsing library heavily leveraged by `proc_macro`.
-//!
-//! In `aqua_parse`, syntax trees are defined by the structure of data types implmenting [Parse]. 
-//!
-//! Given `T : Parse`, a `aqua_parse::Result<T>` is returned by passing a [Position] to `T::parse`.
-//!
-//! Along with the [Parse] trait, there's also a `derive` macro of the same name which 
-//! automatically implements [Parse] for a `struct` or `enum`, given each of its members or variants also implement it.
+//! A general-use parsing library made to use with the `aqua` crate.
+
+/// Some iterable parsers.
+pub mod containers;
+
+mod peek;
+pub use peek::*;
+
+/// Definitions of whitespace parsers.
+pub mod whitespace;
+
+pub use regex;
 
 mod parse;
-mod parse_value;
-mod position;
-mod error;
-mod padded;
-mod literal;
-mod whitespace;
-mod spanned;
-mod pattern;
-
-pub use parse_value::*;
-pub use aqua_parse_macro::*;
 pub use parse::*;
-pub use spanned::*;
-pub use position::*;
-pub use error::*;
-pub use padded::*;
-pub use literal::*;
-pub use whitespace::*;
-pub use pattern::*;
+
+pub use aqua_parse_macro::*;
+
+use aqua_error::*;
+
+
+/// Type alias for `Result<T, aqua_error::Error<'string>>`.
+pub type Result<'string, T> = std::result::Result<T, aqua_error::Error<'string>>;
 
 #[cfg(test)]
 mod tests {
 
 	use crate::*;
-
-	type One = Literal<"1">;
-	type Two = Literal<"2">;
-	type Three = Literal<"3">;
+	use crate::containers::*;
 
 	#[test]
-	fn sequence() -> Result<()> {
-		
-		#[strict]
+	fn one_two_and_three() {
+
+		#[literal("1")]
 		#[derive(Parse, Debug)]
-		pub struct Sequence {
+		struct One;
+
+		#[literal("2")]
+		#[derive(Parse, Debug)]
+		struct Two;
+
+		#[literal("3")]
+		#[derive(Parse, Debug)]
+		struct Three;
+
+		#[derive(Parse, Debug)]
+		struct OneTwoThree {
 			
 			one: One,
 			two: Two,
 			three: Three,
+			peek: Peek
 			
 		}
 
-		let ref mut position = Position::from("123");
+		let result = OneTwoThree::parse("1 2 3", &mut 0);
 
-		let _ = Sequence::parse(position)?;
+		match result {
 
-		println!("{:?}", position);
+			Ok(ok) => println!("{ok:?}"),
+			Err(error) => println!("{error}"),
 
-		Ok(())
+		}
 
 	}
 
 	#[test]
-	fn tuple_like_sequence() -> Result<()> {
+	fn one_two_or_three() {
 
+		#[derive(Parse, Debug, Clone)]
+		enum OneTwoThree {
+			
+			#[literal("1")]
+			One,
+			#[literal("2")]
+			Two,
+			#[literal("3")]
+			Three
+			
+		}
+
+		let result = Exactly::<4, OneTwoThree>::parse(" 2 1 3   1 ", &mut 0);
+
+		assert!(result.is_ok())
+
+	}
+	
+	#[test]
+	fn expression() {
+	
 		#[derive(Parse, Debug)]
-		pub struct TupleLikeSequence(One, Two, Three);
-
-		let ref mut position = Position::from(" \t 123".to_string());
-
-		let _ = TupleLikeSequence::parse(position)?;
-
-		Ok(())
-
-	}
-
-	#[test]
-	fn padded_sequence() -> Result<()> {
+		enum Operator {
+			
+			#[literal("*")]
+			Multiply,
+			#[literal("/")]
+			Divide,
+			#[literal("+")]
+			Plus,
+			#[literal("-")]
+		 	Minus,
+			 
+		}
 		
+		#[pattern(r"\d+")]
 		#[derive(Parse, Debug)]
-		pub struct PaddedSequence { 
+		struct Number(pub String);
+
+		#[derive(Parse, Debug)]
+		enum Expression {
 			
-			one: One,
-			two: Two,
-			three: Three,
+			Binary(Number, Operator, Box::<Expression>),
+			Number(Number)
 			
 		}
 		
-		let ref mut position = Position::from(" 1  2 \n\r3 \t");
+		let ref mut index = 0;
+		
+		let result = Expression::parse("2 * 2 \\ 1", index); 
+		
+		match result {
+			
+			Ok(ok) => println!("{ok:?}"),
+			Err(error) => println!("{error}"),
 
-		PaddedSequence::parse(position)?;
+		}
+		
+	}
 
-		Ok(())
+	#[pattern(r"\b\w+")]
+	#[derive(Parse, Debug, Hash)]
+	pub(crate) struct Word(pub String);
+
+	#[test]
+	fn find_all() {
+		
+		let string = " asdf \t \n batman";
+		let ref mut index = 0;
+
+		let results = Word::find_all(string, index);		
+		let length = results.len();
+		
+		assert_eq!(length, 2)
+
+	}
+	
+	#[test]
+	fn reverse_find() {
+		
+		let string = " asdf \t \n batman \t\r\n \t ";
+		let ref mut index = string.len() - 1;
+
+		let result = Word::find(string, index, Direction::Backward);		
+	
+		println!("{result:?}");
 
 	}
 
 	#[test]
-	fn choice() -> Result<()> {
+	fn list() {
 
-		#[derive(Parse, Debug)]
-		pub enum Choice {
-	
-			One(One),
-			Two(Two),
-			Three(Three),
-	
+		let string = "parsing, \t is , cool";
+		let ref mut index = 0;
+		
+		#[derive(Parse, Debug, Hash)]
+		pub struct Test {
+			
+			pub(crate) words: List::<Word>
+			
 		}
 
-		let ref mut position = Position::from("312");
+		let ok = Test::parse(string, index).unwrap();
 
-		Choice::parse(position)?;
-		Choice::parse(position)?;
-		Choice::parse(position)?;
-
-		Ok(())
-
-	}
-
-	#[test]
-	fn padded_choice() -> Result<()> {
-
-		#[derive(Parse, Debug)]
-		pub enum PaddedChoice {
-	
-			One(One),
-			Two(Two),
-			Three(Three),
-	
-		}
-
-		let ref mut position = Position::from(" 3 \t \n 1  2    ");
-
-		PaddedChoice::parse(position)?;
-		PaddedChoice::parse(position)?;
-		PaddedChoice::parse(position)?;
-
-		Ok(())
-
-	}
-
-	#[test]
-	fn owned_parses() -> Result<()> {
-
-		let ref mut position = Position::from("12");
-
-		Box::<One>::parse(position)?;
-		std::rc::Rc::<Two>::parse(position)?;
-
-		Ok(())
-
-	}
-
-	#[test]
-	fn end() -> Result<()> {
-
-		let ref mut position = Position::from("asdf");
-
-		let _ = Pattern::<"^asdf$">::parse(position)?;
-
-		Ok(())
-
-	}
-
-	#[test]
-	fn pattern() -> Result<()> {
-
-		let ref mut position = Position::from("1234asdf");
-
-		type Number = Pattern<"[0-9]+">;
-
-		let _ = Number::parse(position)?;
-
-		Ok(())
-
-	}
-
-	#[test]
-	fn boolean() -> Result<()> {
-
-		let ref mut position = Position::from("truefalse");
-
-	 	let _ =  bool::parse(position)?;
-		let _ =  bool::parse(position)?;
-
-		Ok(())
+		assert_eq!(ok.words.len(), 3)
 
 	}
 	
-
 }

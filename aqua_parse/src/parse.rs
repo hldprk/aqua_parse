@@ -1,173 +1,124 @@
-use std::any::Any;
-use std::borrow::Borrow;
-use std::borrow::BorrowMut;
-use std::collections::HashSet;
-use std::convert::TryInto;
+use std::any::type_name;
 use std::fmt::Debug;
-use std::rc::Rc;
-use std::convert::TryFrom;
+use super::*;
 
-use crate::*;
+/// Tells `Parse::find` which direction to traverse.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Direction {
 
-/// Constructs the implementing type by fully or partially consuming a [`Position`].
-///## Example
-/// ```
-/// use aqua_parse::*;
-///
-/// type A = Literal::<"a">;
-/// 
-/// let ref mut position = Position::from("a");
-/// 
-/// assert_eq!(Ok(A::default()), A::parse(position))
-/// 
-/// ``` 
-pub trait Parse : Debug + Sized + 'static {
-
-	/// Advances [`Position`], returning `Self` or [`Error`].
-	fn parse(position: &mut Position) -> Result<Self>;
+	Forward,
+	Backward
 
 }
 
-/// Tries parsing `P : Parse`, returning `Ok(Self)`, 
-/// otherwise returning `None` and leaving [`Position`] alone.
-impl<P : Parse> Parse for Option<P> {
+/// Constructs some type by reading a `&str`.
+pub trait Parse : Sized + Debug {
 
-	fn parse(position: &mut Position) -> Result<Self> {
-		
-		let result_maybe = P::parse(position.clone().borrow_mut());
+	/// Used in error messages to label some type being parsed.
+	///
+	/// Uses `type_name::<Self>` by default.
+	fn label() -> String {
 
-		match result_maybe {
-
-			Ok(_) => Ok(Some(P::parse(position)?)),
-			Err(..) => Ok(None)
-
-		}
+		type_name::<Self>().into()
 
 	}
 
-}
+	/// Consumes a `&str` to yield `Result<Self>`.
+	fn parse<'string>(string: &'string str, index: &mut usize) -> Result<'string, Self>;
+	
+	/// Returns whether `Self` will parse successfully.
+	fn can_parse<'string>(string: &'string str, index: &mut usize) -> bool {
 
-impl<P : Parse> Parse for Vec<P> {
+		let ref mut cloned_index = index.clone();
 
-	fn parse(position: &mut Position) -> Result<Self> {
+		Self::parse(string, cloned_index).is_ok()
+
+	}
+
+	/// Finds the first instance of `Self` in a `&str`, starting at `index`.
+	fn find<'string>(string: &'string str, index: &mut usize, direction: Direction) -> Option::<Self> {
 		
-		let mut parsed = Vec::default();
-		let last_error;
+		loop {
+			
+			let end_index = match direction {
 
+				Direction::Forward => string.len(),
+				Direction::Backward => 0,
+
+			};
+
+			if index.clone() == end_index { 
+				
+				return None;
+				
+			}
+			
+			else if Self::can_parse(string, index) {
+				
+				let ok = Self::parse(string, index).unwrap();
+				
+				return Some(ok);
+				
+			} else {
+
+				match direction {
+
+					Direction::Forward => *index += 1,
+					Direction::Backward => *index -= 1
+
+				}
+				
+			}
+			
+		}
+		
+	}
+
+	/// Whether an instance of `Self` is found in a `&str`.
+	fn is_found_in<'string>(string: &'string str) -> bool {
+
+		let ref mut index = 0;
+
+		Self::find(string, index, Direction::Forward).is_some()
+
+	}
+	
+	/// Finds all non-overlapping instances of `Self` in some `&str`.
+	fn find_all<'string>(string: &'string str, index: &mut usize) -> Vec::<Self> {
+		
+		let mut parsed_values = Vec::default();
+		
 		loop {
 
-			if position.clone().next().is_none() {
+			let ref mut cloned_index = index.clone();
 
-				return Err(Error::unexpected_end::<Self>(position.clone()))
+			let start_index = cloned_index.clone();
+			
+			let found_maybe = Self::find(string, cloned_index, Direction::Forward);
+
+			match found_maybe {
+
+				Some(some) => parsed_values.push(some),
+				None => break
 
 			}
 
-			let result = P::parse(position);
+			let end_index = cloned_index.clone();
 
-			if result.is_ok() { parsed.push(result.unwrap()); } 
-			
-			else { 
-			
-				last_error = Some(result.unwrap_err());
-				
-				break;
-			
-			}
+			let progress = match end_index - start_index == 0 {
 
-		}
+				true => 1,
+				false => end_index - start_index
 
-		if parsed.len() > 0 { Ok(parsed) } 
-		
-		else { Err(last_error.unwrap()) }
+			};
 
-	}
-
-}
-
-/// Parses `P : Parse` exactly `N` times, otherwise returns `Err(error)`.
-impl<const N : usize, P : Parse> Parse for [P; N] {
-
-	fn parse(position: &mut Position) -> Result<Self> {
-		
-		let mut parsed = Vec::default();
-		let last_error;
-
-		loop {
-
-			if position.clone().next().is_none() {
-
-				return Err(Error::unexpected_end::<Self>(position.clone()))
-
-			}
-
-			let result = P::parse(position);
-
-			if result.is_ok() { parsed.push(result.unwrap()); } 
-			
-			else { 
-			
-				last_error = Some(result.unwrap_err());
-				
-				break;
-			
-			}
+			*index += progress;
 
 		}
 
-		let result = <[P;N]>::try_from(parsed);
-
-		match result {
-
-			Ok(array) => Ok(array),
-			Err(_) => Err(last_error.unwrap())
-
-		}
-		
-	}
-
-}
-
-
-impl<P : Parse> Parse for Box<P> {
-
-	fn parse(position: &mut Position) -> Result<Self> {
-
-		Ok(Box::new(P::parse(position)?))
+		parsed_values
 
 	}
 
-}
-
-impl<P : Parse> Parse for Rc<P> {
-
-	fn parse(position: &mut Position) -> Result<Self> {
-
-		Ok(Rc::new(P::parse(position)?))
-
-	}
-
-}
-
-impl Parse for bool {
-
-	fn parse(position: &mut Position) -> Result<Self> {
-		
-		let result = Pattern::<"(true|false)">::parse(position);
-
-		match result {
-
-			Ok(pattern) => {
-
-				let boolean = pattern.matched_string().parse::<bool>().unwrap();
-
-				Ok(boolean)
-
-			},
-
-			Err(error) => Err(error)
-
-		}
-
-	}
 
 }
