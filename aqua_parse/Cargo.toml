@@ -1,6 +1,6 @@
 [package]
 name = "aqua_parse"
-version = "0.24.0"
+version = "0.25.0"
 edition = "2021"
 description = "A parser library."
 license = "MIT"
@@ -12,6 +12,6 @@ documentation = "https://docs.rs/aqua_parse"
 pattern = []
 
 [dependencies]
-aqua_parse_macro = { path = "../aqua_parse_macro", version="0.13.0" }
+aqua_parse_macro = { path = "../aqua_parse_macro", version="0.14.0" }
 aqua_error = { path = "../../aqua_error", version="0.2.0" }
 regex = "1.5.4"
