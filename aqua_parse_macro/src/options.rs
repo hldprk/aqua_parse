@@ -10,7 +10,7 @@ pub struct Options {
 
 	pub(crate) is_strict: bool,
 	pub(crate) pattern_maybe: Option<Literal>,
-	pub(crate) literal_maybe: Option<Literal>
+	pub(crate) literal_maybe: Option<Literal>, 
 
 }
 

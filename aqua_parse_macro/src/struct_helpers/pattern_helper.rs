@@ -1,7 +1,7 @@
 use super::*;
 
 /// Implements `Parse` for a struct with a `pattern` attribute.
-pub fn pattern_helper(identifier: Ident, options: Options) -> TokenStream {
+pub(crate) fn pattern_helper(identifier: Ident, parameters: Parameters, options: Options) -> TokenStream {
 
 	let pattern = options.pattern_maybe.unwrap();
 
@@ -14,9 +14,12 @@ pub fn pattern_helper(identifier: Ident, options: Options) -> TokenStream {
 
 	};
 
+	let parameters_with_bounds = parameters.parameters_with_bounds;
+	let parameters_without_bounds = parameters.parameters_without_bounds;
+
 	quote_spanned! {identifier.span()=>
 
-		impl std::fmt::Display for #identifier {
+		impl<#parameters_with_bounds> std::fmt::Display for #identifier<#parameters_without_bounds> {
 
 			fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		
@@ -28,7 +31,7 @@ pub fn pattern_helper(identifier: Ident, options: Options) -> TokenStream {
 
 		}
 
-		impl std::ops::Deref for #identifier {
+		impl<#parameters_with_bounds> std::ops::Deref for #identifier<#parameters_without_bounds> {
 
 			type Target = str;
 
@@ -42,11 +45,11 @@ pub fn pattern_helper(identifier: Ident, options: Options) -> TokenStream {
 
 		} 
 
-		impl Parse for #identifier {
+		impl<#parameters_with_bounds> Parse for #identifier<#parameters_without_bounds> {
 
 			fn label() -> String {
 
-				stringify!(#identifier).to_string()
+				stringify!(#identifier<#parameters_without_bounds>).to_string()
 
 			}
 

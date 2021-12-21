@@ -120,16 +120,16 @@ mod tests {
 		struct Number(pub String);
 
 		#[derive(Parse, Debug)]
-		enum Expression {
+		enum Expression<P : Parse> {
 			
-			Binary(Number, Operator, Box::<Expression>),
-			Number(Number)
+			Binary(P, Operator, Box::<Expression<P>>),
+			Number(P)
 			
 		}
 		
 		let ref mut index = 0;
 		
-		let result = Expression::parse("2 * 2 \\ 1", index); 
+		let result = Expression::<Number>::parse("2 * 2 \\ 1", index); 
 		
 		match result {
 			

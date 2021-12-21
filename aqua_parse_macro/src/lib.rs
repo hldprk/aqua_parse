@@ -3,13 +3,17 @@
 use proc_macro2::*;
 use syn::*;
 use quote::*;
+use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
+use syn::token::Comma;
 
 mod enum_helper;
 mod derive_helper;
 mod options;
+mod parameters;
 mod struct_helpers; 
 
+use parameters::*;
 use struct_helpers::*;
 use enum_helper::*;
 use derive_helper::*;
@@ -81,7 +85,6 @@ pub fn parse_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	
 }
 
-
 #[cfg(test)]
 mod tests {
 
@@ -92,15 +95,11 @@ mod tests {
 	fn struct_test() {
 
 		let tokens = 
-		quote!(#[derive(Parse, Debug)]
+		quote!(
 		
-			struct OneTwoThree {
-
-				#[literal("1")]
-				one: One,
-				peek: Peek
-
-			}
+		#[pattern(r"\b\w+")]
+		#[derive(Parse, Debug, Hash)]
+		pub(crate) struct Word<'word>(pub &'word str);
 		
 		);
 

@@ -1,9 +1,10 @@
+
 use super::*;
 
 /// Implements `Parse` for a `struct` with named fields. 
-pub fn named_helper(identifier: Ident, fields: Fields, options: Options) -> TokenStream {
+pub(crate) fn named_helper(identifier: Ident, parameters: Parameters, fields: Fields, options: Options) -> TokenStream {
 
-	// each fields' parses
+	// tokens for each fields' parses
 	let mut field_parses = TokenStream::default();
 
 	// tokens for variables returned in final return statement
@@ -12,6 +13,9 @@ pub fn named_helper(identifier: Ident, fields: Fields, options: Options) -> Toke
 	// the member name for this struct's `Findings` if there is one
 	let mut findings_identifier_maybe = None;
 
+	let parameters_with_bounds = parameters.parameters_with_bounds;
+	let parameters_without_bounds = parameters.parameters_without_bounds;
+	
 	let whitespace_parse = match options.is_strict {
 
 		// parses as many `Space` as possible, not failing if none are found  
@@ -26,9 +30,10 @@ pub fn named_helper(identifier: Ident, fields: Fields, options: Options) -> Toke
 	for field in fields.clone() {
 
 		let field_identifier = field.ident.clone().unwrap();
-	
+
 		let field_type = field.ty.clone();
 		let findings_type = parse2::<Type>(quote!(Findings)).unwrap();
+		let is_not_findings = findings_type != field_type;
 		
 		// an identifier that holds the `Result` from that field's `parse` method
 		let field_maybe = 
@@ -38,8 +43,8 @@ pub fn named_helper(identifier: Ident, fields: Fields, options: Options) -> Toke
 		let return_fragment = quote!{ #field_identifier : #field_identifier, };
 
 		return_variables.extend(return_fragment);
-		
-		if findings_type != field_type {
+
+		if is_not_findings {
 
 			field_parses.extend(quote_spanned!{field.span()=>
 
@@ -86,7 +91,7 @@ pub fn named_helper(identifier: Ident, fields: Fields, options: Options) -> Toke
 
 		Some(findings_identifier) => {quote! {
 
-			impl Found for #identifier {
+			impl<#parameters_with_bounds> Found for #identifier<#parameters_without_bounds> {
 
 				fn findings(&self) -> &Findings {
 
@@ -106,11 +111,11 @@ pub fn named_helper(identifier: Ident, fields: Fields, options: Options) -> Toke
 
 		#found_implementation
 
-		impl Parse for #identifier {
+		impl<#parameters_with_bounds> Parse for #identifier<#parameters_without_bounds> {
 
 			fn label() -> String {
 
-				stringify!(#identifier).to_string()
+				stringify!(#identifier<#parameters_without_bounds>).to_string()
 
 			}
 

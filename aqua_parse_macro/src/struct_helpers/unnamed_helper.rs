@@ -2,7 +2,7 @@ use super::*;
 
 
 /// A helper for implementing `Parse` for tuple-structs.
-pub fn unnamed_helper(identifier: Ident, fields: Fields, options: Options) -> TokenStream {
+pub(crate) fn unnamed_helper(identifier: Ident, parameters: Parameters, fields: Fields, options: Options) -> TokenStream {
 
 	// each fields' parses
 	let mut field_parses = TokenStream::default();
@@ -18,6 +18,9 @@ pub fn unnamed_helper(identifier: Ident, fields: Fields, options: Options) -> To
 		true => quote!{}
 
 	};
+
+	let parameters_with_bounds = parameters.parameters_with_bounds;
+	let parameters_without_bounds = parameters.parameters_without_bounds;
 
 	field_parses.extend(whitespace_parse.clone());
 
@@ -67,11 +70,11 @@ pub fn unnamed_helper(identifier: Ident, fields: Fields, options: Options) -> To
 
 	quote_spanned! {identifier.span()=>
 
-		impl Parse for #identifier {
+		impl<#parameters_with_bounds> Parse for #identifier<#parameters_without_bounds> {
 
 			fn label() -> String {
 
-				stringify!(#identifier).to_string()
+				stringify!(#identifier<#parameters_without_bounds>).to_string()
 
 			}
 

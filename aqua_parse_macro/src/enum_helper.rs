@@ -4,10 +4,13 @@ use std::ops::BitOr;
 use super::*;
 
 /// A helper that implements `Parse` for an `enum`.
-pub fn enum_helper(identifier: Ident, variants: Vec<Variant>, options: Options) -> TokenStream {
+pub(crate) fn enum_helper(identifier: Ident, parameters: Parameters, variants: Vec<Variant>, options: Options) -> TokenStream {
 	
 	let mut implementation_body = TokenStream::default();
 
+	let parameters_with_bounds = parameters.parameters_with_bounds.clone();
+	let parameters_without_bounds = parameters.parameters_without_bounds.clone();
+	
 	for (variant_number, variant) in variants.iter().enumerate() {
 		
 		let variant_identifier = variant.ident.clone();
@@ -57,23 +60,23 @@ pub fn enum_helper(identifier: Ident, variants: Vec<Variant>, options: Options) 
 		
 		let return_value = match variant_fields {
 
-			Fields::Named(..) => quote!{ #identifier::#variant_identifier { #return_variables } },
-			Fields::Unnamed(..) => quote!{ #identifier::#variant_identifier ( #return_variables) },
-			Fields::Unit => quote! { #identifier::#variant_identifier } 
+			Fields::Named(..) => quote!{ #identifier::<#parameters_without_bounds>::#variant_identifier { #return_variables } },
+			Fields::Unnamed(..) => quote!{ #identifier::<#parameters_without_bounds>::#variant_identifier ( #return_variables) },
+			Fields::Unit => quote! { #identifier::<#parameters_without_bounds>::#variant_identifier } 
 			
 		};
 
-		let variant_implementation = struct_helper(other_identifier.clone(), variant_fields.clone(), variant_options);
+		let variant_implementation = struct_helper(other_identifier.clone(), parameters.clone(), variant_fields.clone(), variant_options);
 
 		implementation_body.extend(quote!{
 
 			#[derive(Debug)]
-			struct #other_identifier #variant_fields;
+			struct #other_identifier <#parameters_with_bounds> #variant_fields;
 			#variant_implementation
 
 			let ref mut #variant_index_identifier = index.clone();
-			
-			let #variant_maybe_identifier = #other_identifier::parse(string, #variant_index_identifier); 
+
+			let #variant_maybe_identifier = #other_identifier::<#parameters_without_bounds>::parse(string, #variant_index_identifier); 
 
 			if #variant_maybe_identifier.is_ok() {
 
@@ -81,7 +84,6 @@ pub fn enum_helper(identifier: Ident, variants: Vec<Variant>, options: Options) 
 
 				#[allow(unused_mut)]
 				let mut result = Ok(#return_value); 
-
 
 				index.clone_from(#variant_index_identifier);
 
@@ -101,7 +103,7 @@ pub fn enum_helper(identifier: Ident, variants: Vec<Variant>, options: Options) 
 
 	quote!{
 
-		impl Parse for #identifier {
+		impl<#parameters_with_bounds> Parse for #identifier<#parameters_without_bounds> {
 
 			fn parse<'string>(string: &'string str, index: &mut usize) -> Result<'string, Self> {
 

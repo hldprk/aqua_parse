@@ -2,18 +2,18 @@
 use super::*;
 
 /// A helper for implementing `Parse` for structs.
-pub fn struct_helper(identifier: Ident, fields: Fields, options: Options) -> TokenStream {
+pub(crate) fn struct_helper(identifier: Ident, parameters: Parameters, fields: Fields, options: Options) -> TokenStream {
 
 	match fields {
 
-		Fields::Named(_) => named_helper(identifier, fields, options),
+		Fields::Named(_) => named_helper(identifier, parameters, fields, options),
 
 		Fields::Unnamed(_) => {
 		
 			match options.pattern_maybe {
 
-				Some(_) => pattern_helper(identifier, options),
-				None => unnamed_helper(identifier, fields, options),
+				Some(_) => pattern_helper(identifier, parameters, options),
+				None => unnamed_helper(identifier, parameters, fields, options),
 
 			}
 		
