@@ -10,8 +10,8 @@
 /// Some iterable parsers.
 pub mod containers;
 
-mod peek;
-pub use peek::*;
+mod found;
+pub use found::*;
 
 /// Definitions of whitespace parsers.
 pub mod whitespace;
@@ -56,7 +56,7 @@ mod tests {
 			one: One,
 			two: Two,
 			three: Three,
-			peek: Peek
+			findings: Findings
 			
 		}
 
@@ -64,7 +64,13 @@ mod tests {
 
 		match result {
 
-			Ok(ok) => println!("{ok:?}"),
+			Ok(ok) => {
+				
+				let findings = ok.findings();
+
+				println!("{findings:?}")
+				
+			},
 			Err(error) => println!("{error}"),
 
 		}

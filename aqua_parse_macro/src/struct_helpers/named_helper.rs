@@ -9,6 +9,9 @@ pub fn named_helper(identifier: Ident, fields: Fields, options: Options) -> Toke
 	// tokens for variables returned in final return statement
 	let mut return_variables = TokenStream::default();
 
+	// the member name for this struct's `Findings` if there is one
+	let mut findings_identifier_maybe = None;
+
 	let whitespace_parse = match options.is_strict {
 
 		// parses as many `Space` as possible, not failing if none are found  
@@ -25,7 +28,7 @@ pub fn named_helper(identifier: Ident, fields: Fields, options: Options) -> Toke
 		let field_identifier = field.ident.clone().unwrap();
 	
 		let field_type = field.ty.clone();
-		let peek_type = parse2::<Type>(quote!(Peek)).unwrap();
+		let findings_type = parse2::<Type>(quote!(Findings)).unwrap();
 		
 		// an identifier that holds the `Result` from that field's `parse` method
 		let field_maybe = 
@@ -36,7 +39,7 @@ pub fn named_helper(identifier: Ident, fields: Fields, options: Options) -> Toke
 
 		return_variables.extend(return_fragment);
 		
-		if peek_type != field_type {
+		if findings_type != field_type {
 
 			field_parses.extend(quote_spanned!{field.span()=>
 
@@ -59,23 +62,49 @@ pub fn named_helper(identifier: Ident, fields: Fields, options: Options) -> Toke
 					
 				}
 				
-				peek.insert(stringify!(#field_identifier), start_index..end_index);
+				findings.insert(stringify!(#field_identifier), start_index..end_index);
 				
 				#whitespace_parse
 
 				let #field_identifier = #field_maybe.unwrap();
 	
 			}.to_token_stream());
-	
+
+		} 
+
+		else {
+
+			findings_identifier_maybe = Some(field_identifier)
 
 		}
-
 		
 	}
 
 	let return_value = quote!{ Self { #return_variables } };
 
+	let found_implementation = match findings_identifier_maybe {
+
+		Some(findings_identifier) => {quote! {
+
+			impl Found for #identifier {
+
+				fn findings(&self) -> &Findings {
+
+					&self.#findings_identifier
+
+				}
+
+			}
+
+		}},
+
+		None => quote! {}
+
+	};
+
 	quote_spanned! {identifier.span()=>
+
+		#found_implementation
 
 		impl Parse for #identifier {
 
@@ -91,15 +120,21 @@ pub fn named_helper(identifier: Ident, fields: Fields, options: Options) -> Toke
 				use std::ops::Range;
 
 				#[allow(unused_assignments)]
-				let mut start_index = 0;
+				let mut start_index = index.clone();
 				
 				#[allow(unused_assignments)]
-				let mut end_index = 0;
+				let mut end_index = index.clone();
 				
 				#[allow(unused_assignments)]
-				let mut peek = BTreeMap::<&'static str, Range<usize>>::default();
+				let mut findings = BTreeMap::<&'static str, Range<usize>>::default();
 
+				let self_start_index = index.clone();
+				
 				#field_parses
+
+				let self_end_index = index.clone();
+				
+				findings.insert("self", self_start_index..self_end_index);
 
 				#[allow(unused_mut)]
 				let mut result = Ok(#return_value);
