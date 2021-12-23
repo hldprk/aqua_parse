@@ -10,8 +10,8 @@ pub(crate) fn named_helper(identifier: Ident, parameters: Parameters, fields: Fi
 	// tokens for variables returned in final return statement
 	let mut return_variables = TokenStream::default();
 
-	// the member name for this struct's `Findings` if there is one
-	let mut findings_identifier_maybe = None;
+	// the member name for this struct's `Spans` if there is one
+	let mut spans_identifier_maybe = None;
 
 	let parameters_with_bounds = parameters.parameters_with_bounds;
 	let parameters_without_bounds = parameters.parameters_without_bounds;
@@ -32,9 +32,9 @@ pub(crate) fn named_helper(identifier: Ident, parameters: Parameters, fields: Fi
 		let field_identifier = field.ident.clone().unwrap();
 
 		let field_type = field.ty.clone();
-		let findings_type = parse2::<Type>(quote!(Findings)).unwrap();
-		let is_not_findings = findings_type != field_type;
-		
+		let spans_type = parse2::<Type>(quote!(Spans)).unwrap();
+		let is_not_spans = spans_type != field_type;
+
 		// an identifier that holds the `Result` from that field's `parse` method
 		let field_maybe = 
 			Ident::new(	&format!("{field_identifier}_maybe"), proc_macro2::Span::call_site());
@@ -44,7 +44,7 @@ pub(crate) fn named_helper(identifier: Ident, parameters: Parameters, fields: Fi
 
 		return_variables.extend(return_fragment);
 
-		if is_not_findings {
+		if is_not_spans {
 
 			field_parses.extend(quote_spanned!{field.span()=>
 
@@ -67,7 +67,7 @@ pub(crate) fn named_helper(identifier: Ident, parameters: Parameters, fields: Fi
 					
 				}
 				
-				findings.insert(stringify!(#field_identifier), start_index..end_index);
+				spans.insert(stringify!(#field_identifier), start_index..end_index);
 				
 				#whitespace_parse
 
@@ -79,7 +79,7 @@ pub(crate) fn named_helper(identifier: Ident, parameters: Parameters, fields: Fi
 
 		else {
 
-			findings_identifier_maybe = Some(field_identifier)
+			spans_identifier_maybe = Some(field_identifier)
 
 		}
 		
@@ -87,15 +87,15 @@ pub(crate) fn named_helper(identifier: Ident, parameters: Parameters, fields: Fi
 
 	let return_value = quote!{ Self { #return_variables } };
 
-	let found_implementation = match findings_identifier_maybe {
+	let found_implementation = match spans_identifier_maybe {
 
-		Some(findings_identifier) => {quote! {
+		Some(spans_identifier) => {quote! {
 
-			impl<#parameters_with_bounds> Found for #identifier<#parameters_without_bounds> {
+			impl<#parameters_with_bounds> Spanned for #identifier<#parameters_without_bounds> {
 
-				fn findings(&self) -> &Findings {
+				fn spans(&self) -> &Spans {
 
-					&self.#findings_identifier
+					&self.#spans_identifier
 
 				}
 
@@ -131,7 +131,7 @@ pub(crate) fn named_helper(identifier: Ident, parameters: Parameters, fields: Fi
 				let mut end_index = index.clone();
 				
 				#[allow(unused_assignments)]
-				let mut findings = BTreeMap::<&'static str, Range<usize>>::default();
+				let mut spans = BTreeMap::<&'static str, Range<usize>>::default();
 
 				let self_start_index = index.clone();
 				
@@ -139,12 +139,11 @@ pub(crate) fn named_helper(identifier: Ident, parameters: Parameters, fields: Fi
 
 				let self_end_index = index.clone();
 				
-				findings.insert("self", self_start_index..self_end_index);
+				spans.insert("self", self_start_index..self_end_index);
 
-				#[allow(unused_mut)]
-				let mut result = Ok(#return_value);
+				let ok = Ok(#return_value);
 				
-				result
+				ok
 
 			}
 

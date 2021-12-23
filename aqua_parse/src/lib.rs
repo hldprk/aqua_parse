@@ -10,8 +10,8 @@
 /// Some iterable parsers.
 pub mod containers;
 
-mod found;
-pub use found::*;
+mod spanned;
+pub use spanned::*;
 
 /// Definitions of whitespace parsers.
 pub mod whitespace;
@@ -56,7 +56,7 @@ mod tests {
 			one: One,
 			two: Two,
 			three: Three,
-			findings: Findings
+			spans: Spans
 			
 		}
 
@@ -66,9 +66,9 @@ mod tests {
 
 			Ok(ok) => {
 				
-				let findings = ok.findings();
+				let spans = ok.spans();
 
-				println!("{findings:?}")
+				println!("{spans:?}")
 				
 			},
 			Err(error) => println!("{error}"),
