@@ -9,7 +9,7 @@ pub(crate) struct Parameters {
 
 }
 
-/// Separates type parameters into those with type bounds to those without. 
+/// Separates type parameters into those with type bounds and those without. 
 impl From<Punctuated<GenericParam, Comma>> for Parameters {
 
 	fn from(other_parameters: Punctuated<GenericParam, Comma>) -> Self {

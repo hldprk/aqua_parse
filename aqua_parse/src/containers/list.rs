@@ -2,8 +2,13 @@ use super::*;
 use std::hash::*;
 
 /// Comma-separated list, where trailing comma is optional.
-#[derive(Debug, Clone, PartialEq, PartialOrd, Default, Eq)]
-pub struct List<P : Parse>(Vec<P>);
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq)]
+pub struct List<P : Parse>{ 
+
+	elements: Vec<P>,
+	span: Span
+
+}
 
 impl<P : Parse> Deref for List<P> {
 
@@ -11,7 +16,7 @@ impl<P : Parse> Deref for List<P> {
 
 	fn deref(&self) -> &Self::Target {
 		
-		self.0.deref()
+		self.elements.deref()
 
 	}
 	
@@ -30,25 +35,36 @@ impl<P: Hash + Parse> Hash for List<P> {
 
 impl<P : Parse> Parse for List<P> {
 
-	fn parse<'string>(string: &'string str, index: &mut usize) -> Result<'string, Self> {
+	fn span(&self) -> &Span {
 		
-		#[literal(",")]
-		#[derive(Debug, Parse, PartialEq, Eq, PartialOrd, Ord)]
-		pub struct Comma;
+		&self.span
 
-		let mut content = Vec::default();
+	}
 
+	fn parse(state: &mut State) -> Result<Self> {
+
+		#[pattern("[,]")]
+		#[derive(Clone, Parse, PartialEq, Eq, PartialOrd, Ord, Hash)]
+		pub struct Comma(Span);
+		
+		let mut elements = Vec::default();
+		let start_index = state.index();
+		
 		loop {
 
-			if P::can_parse(string, index) {
+			if P::can_parse(state) {
 
-				let ok = P::parse(string, index)?;
+				let ok = P::parse(state)?;
 
-				content.push(ok);
+				let _ = Many::<whitespace::Whitespace>::parse(state);
 
-				if Comma::can_parse(string, index) {
+				elements.push(ok);
 
-					let _ = Comma::parse(string, index)?;
+				if Comma::can_parse(state) {
+
+					let _ = Comma::parse(state)?;
+
+					let _ = Many::<whitespace::Whitespace>::parse(state);
 
 				}
 
@@ -60,7 +76,13 @@ impl<P : Parse> Parse for List<P> {
 	
 		}
 
-		Ok(Self(content))
+		let end_index = state.index();
+		let range = start_index .. end_index;
+		let page = state.page();
+
+		let span = Span::new(page, range);	
+
+		Ok( Self { elements, span } )
 
 	}
 

@@ -2,29 +2,30 @@ use super::*;
 
 /// Parses a tab (`\t`) character.
 #[strict]
-#[literal("\t")]
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Parse, Hash)]
-pub struct Tab;
+#[pattern("\t")]
+#[derive(Clone, Parse, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Tab(Span);
 
+/// Parses a space (` `) character.
 #[strict]
-#[literal(" ")]
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Parse, Hash)]
-pub struct Space;
+#[pattern("[ ]")]
+#[derive(Clone, Parse, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Space(Span);
 
 /// Parses a whitespace character.
 #[strict]
 #[pattern(r"\s")]
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Parse, Hash)]
-pub struct Whitespace(pub String);
+#[derive(Clone, Parse, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Whitespace(Span);
 
-/// Parses a newline(\n or \r\n).
+/// Parses a newline(`\n` or `\r\n`).
 #[strict]
-#[pattern(r"(\r\n)|(\n)")]
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Parse, Hash)]
-pub struct Newline(pub String);
+#[pattern(r"((\r\n)|(\n))")]
+#[derive(Clone, Parse, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Newline(Span);
 
 /// Parses a non-whitespace character.
 #[strict]
-#[pattern(r"\S")]
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Parse, Hash)]
-pub struct Nonwhitespace(pub String);
+#[pattern(r"(\S)")]
+#[derive(Clone, Parse, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Nonwhitespace(Span);

@@ -1,5 +1,4 @@
 use super::*;
-use super::struct_helpers::*;
 
 /// Appends an implementation of `Parse` to some `struct` or `enum` definition.
 pub fn derive_helper(input: proc_macro2::TokenStream) -> TokenStream {
@@ -33,7 +32,7 @@ pub fn derive_helper(input: proc_macro2::TokenStream) -> TokenStream {
 		
 		Data::Union(_) => quote_spanned! {derive_input.span()=> 
 		
-			compile_error!("unions can't be 'Parse'") 
+			compile_error!("Unions can't derive 'Parse'.") 
 		
 		}
 

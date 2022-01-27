@@ -3,31 +3,32 @@
 #![allow(const_evaluatable_unchecked)]
 #![allow(incomplete_features)]
 #![feature(adt_const_params)]
-#![feature(generic_const_exprs)]
+#![feature(generic_const_exprs)]						
+
 
 //! A general-use parsing library made to use with the `aqua` crate.
+use std::rc::*;
+use std::fmt::Debug;
+use aqua_error::*;
+use regex::Regex;
+use std::ops::Deref;
 
 /// Some iterable parsers.
 pub mod containers;
 
-mod spanned;
-pub use spanned::*;
-
 /// Definitions of whitespace parsers.
 pub mod whitespace;
 
-pub use regex;
-
 mod parse;
+mod state;
+
+pub use state::*;
 pub use parse::*;
 
 pub use aqua_parse_macro::*;
 
-use aqua_error::*;
-
-
-/// Type alias for `Result<T, aqua_error::Error<'string>>`.
-pub type Result<'string, T> = std::result::Result<T, aqua_error::Error<'string>>;
+/// `Result<T, aqua_error::Error>`
+pub type Result<T> = std::result::Result<T, Error>;
 
 #[cfg(test)]
 mod tests {
@@ -35,20 +36,20 @@ mod tests {
 	use crate::*;
 	use crate::containers::*;
 
+	#[pattern("1")]
+	#[derive(Clone, Parse, PartialEq, Eq, PartialOrd, Ord, Hash)]
+	pub struct One(Span);
+	
+	#[pattern("2")]
+	#[derive(Clone, Parse, PartialEq, Eq, PartialOrd, Ord, Hash)]
+	pub struct Two(Span);
+	
+	#[pattern("3")]
+	#[derive(Clone, Parse, PartialEq, Eq, PartialOrd, Ord, Hash)]
+	pub struct Three(Span);
+	
 	#[test]
 	fn one_two_and_three() {
-
-		#[literal("1")]
-		#[derive(Parse, Debug)]
-		struct One;
-
-		#[literal("2")]
-		#[derive(Parse, Debug)]
-		struct Two;
-
-		#[literal("3")]
-		#[derive(Parse, Debug)]
-		struct Three;
 
 		#[derive(Parse, Debug)]
 		struct OneTwoThree {
@@ -56,24 +57,26 @@ mod tests {
 			one: One,
 			two: Two,
 			three: Three,
-			spans: Spans
+			span: Span
 			
 		}
 
-		let result = OneTwoThree::parse("1 2 3", &mut 0);
+		let ref mut state = State::from("123");
+
+		let result = OneTwoThree::parse(state);
 
 		match result {
 
-			Ok(ok) => {
+			Ok(_) => println!("{state:#?}"),
+			Err(error) =>{
+				println!("{error}");
+				println!("{state:#?}")
+			
+			} 
 				
-				let spans = ok.spans();
-
-				println!("{spans:?}")
-				
-			},
-			Err(error) => println!("{error}"),
 
 		}
+
 
 	}
 
@@ -83,108 +86,90 @@ mod tests {
 		#[derive(Parse, Debug, Clone)]
 		enum OneTwoThree {
 			
-			#[literal("1")]
-			One,
-			#[literal("2")]
-			Two,
-			#[literal("3")]
-			Three
+			One(One),
+			Two(Two),
+			Three(Three)
 			
 		}
+		
+		let ref mut state = State::from(" 2 1 3 1 ");
 
-		let result = Exactly::<4, OneTwoThree>::parse(" 2 1 3   1 ", &mut 0);
+		let result = Many::<OneTwoThree>::parse(state);
 
-		assert!(result.is_ok())
+		assert!(result.is_ok());
+		
+		let ok = result.unwrap();
+		
+		println!("{:?}", ok)
 
 	}
 	
+
+	#[pattern(r"[+]")]
+	#[derive(Clone, Parse, PartialEq, Eq, PartialOrd, Ord, Hash)]
+	pub struct Plus(Span);	
+	
+	#[pattern(r"[-]")]
+	#[derive(Clone, Parse, PartialEq, Eq, PartialOrd, Ord, Hash)]
+	pub struct Minus(Span);
+
 	#[test]
 	fn expression() {
 	
 		#[derive(Parse, Debug)]
 		enum Operator {
 			
-			#[literal("*")]
-			Multiply,
-			#[literal("/")]
-			Divide,
-			#[literal("+")]
-			Plus,
-			#[literal("-")]
-		 	Minus,
-			 
+			Plus(Plus),
+			Minus(Minus),
+
 		}
 		
 		#[pattern(r"\d+")]
+		#[derive(Clone, Parse, PartialEq, Eq, PartialOrd, Ord, Hash)]
+		pub struct Number(Span);
+	
 		#[derive(Parse, Debug)]
-		struct Number(pub String);
-
-		#[derive(Parse, Debug)]
-		enum Expression<P : Parse> {
+		struct Term {
 			
-			Binary(P, Operator, Box::<Expression<P>>),
-			Number(P)
-			
-		}
-		
-		let ref mut index = 0;
-		
-		let result = Expression::<Number>::parse("2 * 2 \\ 1", index); 
-		
-		match result {
-			
-			Ok(ok) => println!("{ok:?}"),
-			Err(error) => println!("{error}"),
+			span: Span,
+			operator_maybe: Maybe::<Operator>,
+			number: Number,
 
 		}
+		
+		let ref mut state = State::from(" 2 + 2 - 1 ");
+		
+		let result = Many::<Term>::parse(state); 
+	
+		println!("{result:#?}")
 		
 	}
 
-	#[pattern(r"\b\w+")]
-	#[derive(Parse, Debug, Hash)]
-	pub(crate) struct Word(pub String);
+
+	#[pattern(r"\b\w+\b")]
+	#[derive(Clone, Parse, PartialEq, Eq, PartialOrd, Ord, Hash)]
+	pub struct Word(Span);
 
 	#[test]
 	fn find_all() {
 		
-		let string = " asdf \t \n batman";
-		let ref mut index = 0;
+		let ref mut state = State::from("asdf \t \n batman");
 
-		let results = Word::find_all(string, index);		
+		let results = Word::find_all(state);		
 		let length = results.len();
 		
-		assert_eq!(length, 2)
+		assert_eq!(length, 2);
 
 	}
 	
-	#[test]
-	fn reverse_find() {
-		
-		let string = " asdf \t \n batman \t\r\n \t ";
-		let ref mut index = string.len() - 1;
-
-		let result = Word::find(string, index, Direction::Backward);		
-	
-		println!("{result:?}");
-
-	}
-
 	#[test]
 	fn list() {
 
-		let string = "parsing, \t is , cool";
-		let ref mut index = 0;
+		let ref mut state = State::from("parsing , is \t, cool");
 		
-		#[derive(Parse, Debug, Hash)]
-		pub struct Test {
-			
-			pub(crate) words: List::<Word>
-			
-		}
-
-		let ok = Test::parse(string, index).unwrap();
-
-		assert_eq!(ok.words.len(), 3)
+		let ok = List::<Word>::parse(state).unwrap();
+		
+		assert_eq!(ok.len(), 3);
 
 	}
 	

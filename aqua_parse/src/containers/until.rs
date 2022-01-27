@@ -3,19 +3,20 @@ use super::*;
 use std::fmt::Debug;
 
 /// Given `A, B : Parse`, parses `A` until `B` can be parsed.
-#[derive(Default, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Until<A : Parse, B : Parse> {
 
-	content: Vec<A>,
+	elements: Vec<A>,
+	span: Span,
 	phantom_data: PhantomData<B>
 
 }
 
 impl<A : Parse, B : Parse> Until<A, B> {
 	
-	pub fn content(&self) -> &[A] {
+	pub fn elements(&self) -> &[A] {
 
-		self.content.deref()
+		self.elements.deref()
 
 	}
 
@@ -27,7 +28,7 @@ impl<A : Parse, B : Parse> Deref for Until<A, B> {
 
 	fn deref(&self) -> &Self::Target {
 		
-		self.content.deref()
+		self.elements.deref()
 
 	}
 
@@ -37,7 +38,7 @@ impl<A : Parse + Display, B : Parse> Display for Until<A, B> {
 
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		
-		for a in self.content() {
+		for a in self.elements() {
 
 			write!(f, "{a}")?;
 
@@ -53,36 +54,49 @@ impl<A : Parse, B : Parse> Debug for Until<A, B> {
 
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		
-		write!(f, "{:?}", self.content())
+		write!(f, "{:?}", self.elements())
 
 	}
 
 } 
 
 impl<A : Parse, B : Parse> Parse for Until<A, B> {
-
-	fn parse<'string>(string: &'string str, index: &mut usize) -> Result<'string, Self> {
+	
+	fn span(&self) -> &Span {
 		
-		let mut content = Vec::default();
+		&self.span
+
+	}
+	
+	fn parse(state: &mut State) -> Result<Self> {
+		
+		let mut elements = Vec::default();
+		let page = state.page();
+		let start_index = state.index();
+		let mut end_index = state.index();
 
 		loop {
 
-			if B::can_parse(string, index) { break; }
+			if B::can_parse(state) { break; }
 			
 			else {
 
-				let ok = A::parse(string, index)?;
+				let ok = A::parse(state)?;
 
-				content.push(ok);
+				end_index = state.index();
+
+				elements.push(ok);
 
 			} 
 
 		}
 
 		let phantom_data = Default::default();
+		let range = start_index .. end_index;
+		let span = Span::new(page, range);
 		
-		Ok(Self { phantom_data, content })
+		Ok(Self { phantom_data, elements, span })
 
 	}
 
-} 
+}
